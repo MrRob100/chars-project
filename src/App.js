@@ -8,7 +8,10 @@ import sass from './sass/app.scss';
 function App() {
 
   const [showForm, setShowForm] = useState(false);
-  const [chars, setChars] = useState([]);
+  const [chars, setChars] = useState([
+    {'name': 'wallace', 'phrases': 'carabmola', 'votes': 0, 'creator': 'xyz'},
+    {'name': 'brick', 'phrases': 'slow', 'votes': 2, 'creator': 'xyz'},
+  ]);
   const [name, setName] = useState('');
   const [phrase, setPhrase] = useState('');
 
@@ -196,21 +199,21 @@ function App() {
     }
   ];
 
-  const contractProvider = new providers.JsonRpcProvider(`https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd`)
-  const contract = new Contract(contractAddress, abi, contractProvider);
-
-  const fetchChars = async () => {
-    let chars = await contract.getChars();
-
-    let fillChars = [];
-    chars.forEach(function(item) {
-      fillChars.push({'name': item.name, 'votes': item.votes.toString(), 'top_phrase': item.phrase});
-    });
-
-    setChars(fillChars);
-  }
-
-  fetchChars();
+  // const contractProvider = new providers.JsonRpcProvider(`https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd`)
+  // const contract = new Contract(contractAddress, abi, contractProvider);
+  //
+  // const fetchChars = async () => {
+  //   let chars = await contract.getChars();
+  //
+  //   let fillChars = [];
+  //   chars.forEach(function(item) {
+  //     fillChars.push({'name': item.name, 'votes': item.votes.toString(), 'top_phrase': item.phrase});
+  //   });
+  //
+  //   setChars(fillChars);
+  // }
+  //
+  // fetchChars();
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -266,6 +269,7 @@ function App() {
             <th scope="col">Name</th>
             <th scope="col">Votes</th>
             <th scope="col">Top Phrase</th>
+            <th scope="col">Creator</th>
             <th scope="col">Actions</th>
           </tr>
           </thead>
@@ -275,7 +279,8 @@ function App() {
                 <tr className="table-active" key={index}>
                   <td>{item.name}</td>
                   <td>{item.votes}</td>
-                  <td>{item.top_phrase}</td>
+                  <td>{item.phrases}</td>
+                  <td>{item.creator}</td>
                   <td>
                     <button className="btn btn-sm btn-success mx-1">View</button>
                     <button className="btn btn-sm btn-info mx-1">Edit</button>
