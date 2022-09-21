@@ -6,74 +6,30 @@ import React, { Component, useState, useEffect } from "react";
 import sass from './sass/app.scss';
 
 function App() {
-
-  const [showForm, setShowForm] = useState(false);
-  const [chars, setChars] = useState([
-    {'name': 'wallace', 'phrases': 'carabmola', 'votes': 0, 'creator': 'xyz'},
-    {'name': 'brick', 'phrases': 'slow', 'votes': 2, 'creator': 'xyz'},
-  ]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [chars, setChars] = useState([]);
   const [name, setName] = useState('');
   const [phrase, setPhrase] = useState('');
+  const [activity, setActivity] = useState('...');
+  const [walletAddress, setWalletAddress] = useState("");
 
-  const contractAddress = '0xb8AB6066d20dba07F547268A45496b1C59BE9c12';
+  const contractAddress = '0x81e4f93013dE5ecC5eC6AD0CBE24E70D1cC570Ba';
   const abi = [
     {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "charId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "actionType",
-          "type": "string"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "executor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "created",
-          "type": "uint256"
-        }
-      ],
-      "name": "Action",
-      "type": "event"
-    },
-    {
       "inputs": [
         {
           "internalType": "string",
-          "name": "name",
+          "name": "_name",
           "type": "string"
         },
         {
           "internalType": "string",
-          "name": "phrase",
+          "name": "_phrases",
           "type": "string"
         }
       ],
-      "name": "createChar",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
+      "name": "addCharacter",
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -81,68 +37,30 @@ function App() {
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "_id",
           "type": "uint256"
         }
       ],
-      "name": "authorOf",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "charsOf",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "addVoteToCharacter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "_id",
           "type": "uint256"
         }
       ],
-      "name": "delCharOf",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getChars",
+      "name": "getCharacter",
       "outputs": [
         {
           "components": [
             {
               "internalType": "uint256",
-              "name": "charId",
+              "name": "id",
               "type": "uint256"
             },
             {
@@ -152,13 +70,8 @@ function App() {
             },
             {
               "internalType": "string",
-              "name": "phrase",
+              "name": "phrases",
               "type": "string"
-            },
-            {
-              "internalType": "address",
-              "name": "author",
-              "type": "address"
             },
             {
               "internalType": "uint256",
@@ -166,19 +79,14 @@ function App() {
               "type": "uint256"
             },
             {
-              "internalType": "uint256",
-              "name": "created",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "updated",
-              "type": "uint256"
+              "internalType": "address",
+              "name": "creator",
+              "type": "address"
             }
           ],
-          "internalType": "struct CharsAllState.CharStruct[]",
+          "internalType": "struct Characters.Character",
           "name": "",
-          "type": "tuple[]"
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -186,12 +94,52 @@ function App() {
     },
     {
       "inputs": [],
-      "name": "owner",
+      "name": "getCharacterNextKey",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "uint256",
           "name": "",
-          "type": "address"
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getCharacters",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "phrases",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "votes",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "creator",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct Characters.Character[]",
+          "name": "",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -199,44 +147,113 @@ function App() {
     }
   ];
 
-  // const contractProvider = new providers.JsonRpcProvider(`https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd`)
-  // const contract = new Contract(contractAddress, abi, contractProvider);
+  async function requestAccount() {
+      console.log('Requesting account...');
+
+      // ❌ Check if Meta Mask Extension exists
+      if(window.ethereum) {
+        console.log('detected');
+
+        try {
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          setWalletAddress(accounts[0]);
+        } catch (error) {
+          console.log('Error connecting...');
+        }
+
+      } else {
+        alert('Meta Mask not detected');
+      }
+  }
+
+  // async function connectWallet() {
   //
-  // const fetchChars = async () => {
-  //   let chars = await contract.getChars();
-  //
-  //   let fillChars = [];
-  //   chars.forEach(function(item) {
-  //     fillChars.push({'name': item.name, 'votes': item.votes.toString(), 'top_phrase': item.phrase});
-  //   });
-  //
-  //   setChars(fillChars);
   // }
-  //
-  // fetchChars();
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    console.log(event);
+  const getCharacters = async () => {
+
+    setActivity('Getting chars');
+
+    const contractProvider = new providers.JsonRpcProvider(`https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd`);
+
+    console.log(contractProvider);
+
+    const contractX = new Contract(contractAddress, abi, contractProvider);
+
+    let chars = await contractX.getCharacters();
+
+    console.log(chars);
+
+    let fillChars = [];
+    chars.forEach(function(item) {
+      fillChars.push({'name': item.name, 'votes': item.votes.toString(), 'top_phrase': item.phrases});
+    });
+
+    setChars(fillChars);
+    setActivity('Successfully got chars');
   }
 
-  function handleChange() {
-    console.log('ch');
+  async function handleCreateSubmit(event) {
+      event.preventDefault();
+
+    if(typeof window.ethereum !== 'undefined') {
+      await requestAccount();
+      setActivity('creating character');
+      setShowCreateForm(false);
+
+      const provider = new providers.Web3Provider(window.ethereum);
+
+      const signer = provider.getSigner();
+
+      const contractX = new Contract(contractAddress, abi, signer);
+
+      // console.log(contractX);
+
+      const tx = await contractX.addCharacter(name, phrase);
+      await tx.wait();
+
+      //some success logic
+      console.log(tx);
+
+      // const chars = await contractX.getCharacters();
+      // console.log('chars', chars);
+
+      console.log('successfully created character');
+      await getCharacters();
+    }
   }
 
-  const getForm = () => {
+  const getCreateForm = () => {
       return <div className="row my-3">
         <div className="col-6 offset-3">
           <div className="card">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleCreateSubmit}>
               <div className="card-body">
                 <div className="form-group">
                   <label htmlFor="name" className="form-label mt-4">Name</label>
-                  <input type="text" className="form-control" id="name" placeholder="Baldy McShitJokes"></input>
+                  <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="form-control"
+                      id="name"
+                      placeholder="Baldy McShitJokes">
+                  </input>
                 </div>
                 <div className="form-group">
                   <label htmlFor="phrase" className="form-label mt-4">Phrase</label>
-                  <input type="text" className="form-control" id="phrase" placeholder="I can never un-see this" ></input>
+                  <input
+                      type="text"
+                      required
+                      value={phrase}
+                      onChange={(e) => setPhrase(e.target.value)}
+                      className="form-control"
+                      id="phrase"
+                      placeholder="I can never un-see this" >
+                  </input>
                 </div>
                 <br></br>
                 <input type="submit" value="Save" />
@@ -247,22 +264,23 @@ function App() {
       </div>
   }
 
-  const showFormMethod = () => {
-    setShowForm(true);
-  }
-
-  const submitForm = () => {
-    // let created = await contract.createChars();
+  const showCreateFormMethod = () => {
+    setShowCreateForm(true);
   }
 
   return (
     <div className="App">
+      <p>Activity: {activity}</p>
       <header>
         <button
-            onClick={showFormMethod}
+          onClick={getCharacters}
+          className="btn btn-info"
+        >Get Chars</button>
+        <button
+            onClick={showCreateFormMethod}
             className="btn btn-warning m-3"
         >Create Char</button>
-        {showForm && getForm()}
+        {showCreateForm && getCreateForm()}
         <table className="table table-hover">
           <thead>
           <tr>
@@ -279,7 +297,7 @@ function App() {
                 <tr className="table-active" key={index}>
                   <td>{item.name}</td>
                   <td>{item.votes}</td>
-                  <td>{item.phrases}</td>
+                  <td>{item.top_phrase}</td>
                   <td>{item.creator}</td>
                   <td>
                     <button className="btn btn-sm btn-success mx-1">View</button>
