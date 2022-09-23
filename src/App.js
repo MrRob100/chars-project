@@ -1,6 +1,6 @@
 import './App.css';
 
-import { getDefaultProvider, providers, Wallet, Contract, utilsm, utils } from "ethers";
+import { providers, Wallet, Contract, utils } from "ethers";
 
 import React, { Component, useState, useEffect } from "react";
 import sass from './sass/app.scss';
@@ -147,7 +147,7 @@ function App() {
     }
   ];
 
-  async function requestAccount() {
+  const requestAccount = async () => {
       console.log('Requesting account...');
 
       // ❌ Check if Meta Mask Extension exists
@@ -168,10 +168,6 @@ function App() {
       }
   }
 
-  // async function connectWallet() {
-  //
-  // }
-
   const getCharacters = async () => {
 
     setActivity('Getting chars');
@@ -188,14 +184,22 @@ function App() {
 
     let fillChars = [];
     chars.forEach(function(item) {
-      fillChars.push({'name': item.name, 'votes': item.votes.toString(), 'top_phrase': item.phrases});
+      fillChars.push(
+        {
+          'id': item.id.toNumber(),
+          'name': item.name,
+          'votes': item.votes.toString(),
+          'top_phrase': item.phrases,
+          'creator': utils.getAddress(item.creator),
+        }
+      );
     });
 
     setChars(fillChars);
     setActivity('Successfully got chars');
   }
 
-  async function handleCreateSubmit(event) {
+  const createCharacters = async (event) => {
       event.preventDefault();
 
     if(typeof window.ethereum !== 'undefined') {
@@ -225,11 +229,31 @@ function App() {
     }
   }
 
+  const upVoteCharacter = async (item) => {
+    if(typeof window.ethereum !== 'undefined') {
+      await requestAccount();
+      setActivity('upvoting character');
+
+      const provider = new providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contractX = new Contract(contractAddress, abi, signer);
+
+      const tx = await contractX.addVoteToCharacter(item.id);
+      await tx.wait();
+      await getCharacters();
+      setActivity('Upvoted character');
+    }
+  }
+
+  const viewCharacter = async () => {
+
+  }
+
   const getCreateForm = () => {
       return <div className="row my-3">
         <div className="col-6 offset-3">
           <div className="card">
-            <form onSubmit={handleCreateSubmit}>
+            <form onSubmit={createCharacters}>
               <div className="card-body">
                 <div className="form-group">
                   <label htmlFor="name" className="form-label mt-4">Name</label>
@@ -302,7 +326,8 @@ function App() {
                   <td>
                     <button className="btn btn-sm btn-success mx-1">View</button>
                     <button className="btn btn-sm btn-info mx-1">Edit</button>
-                    <button className="btn btn-sm btn-warning mx-1">Vote</button>
+                    {/*<button className="btn btn-sm btn-warning mx-1">Votett {item.id}</button>*/}
+                    <button onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote</button>
                     <button className="btn btn-sm btn-danger mx-1">Delete</button>
                   </td>
                 </tr>
