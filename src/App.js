@@ -7,7 +7,9 @@ import sass from './sass/app.scss';
 
 function App() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showShow, setShow] = useState(false);
   const [chars, setChars] = useState([]);
+  const [selectedChar, setSelectedChar] = useState({});
   const [name, setName] = useState('');
   const [phrase, setPhrase] = useState('');
   const [activity, setActivity] = useState('...');
@@ -170,17 +172,17 @@ function App() {
 
   const getCharacters = async () => {
 
-    setActivity('Getting chars');
+    setActivity('Getting chars...');
+
+    await requestAccount();
 
     const contractProvider = new providers.JsonRpcProvider(`https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd`);
 
-    console.log(contractProvider);
+    // console.log(contractProvider);
 
     const contractX = new Contract(contractAddress, abi, contractProvider);
 
     let chars = await contractX.getCharacters();
-
-    console.log(chars);
 
     let fillChars = [];
     chars.forEach(function(item) {
@@ -206,6 +208,7 @@ function App() {
       await requestAccount();
       setActivity('creating character');
       setShowCreateForm(false);
+      setShow(false);
 
       const provider = new providers.Web3Provider(window.ethereum);
 
@@ -245,8 +248,47 @@ function App() {
     }
   }
 
-  const viewCharacter = async () => {
+  const viewCharacter = async (item) => {
+    setShow(true);
+    setShowCreateForm(false);
+    const contractProvider = new providers.JsonRpcProvider(`https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd`);
 
+    const contractX = new Contract(contractAddress, abi, contractProvider);
+
+    let char = await contractX.getCharacter(item.id);
+    setSelectedChar({
+      'id': char.id.toNumber(),
+      'name': char.name,
+      'votes': char.votes.toString(),
+      'phrases': char.phrases,
+      'creator': utils.getAddress(char.creator),
+    });
+  }
+
+  const getShow = () => {
+
+    let phrases = JSON.parse(selectedChar.phrases);
+
+    return <div className="row my-3">
+      <div className="col-6 offset-3">
+        <div className="card">
+          <form onSubmit={createCharacters}>
+            <div className="card-body">
+              <h1>{selectedChar.name}</h1>
+              <p>Phrases:</p>
+              <ul>
+              {phrases.map(function (item, index) {
+                return (
+                  <li key={index}>item</li>
+                )})
+              }
+              </ul>
+              <button onClick={() => setShow(false)} className="btn btn-default">Close</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   }
 
   const getCreateForm = () => {
@@ -305,6 +347,7 @@ function App() {
             className="btn btn-warning m-3"
         >Create Char</button>
         {showCreateForm && getCreateForm()}
+        {showShow && getShow()}
         <table className="table table-hover">
           <thead>
           <tr>
@@ -318,15 +361,14 @@ function App() {
           <tbody>
           {chars.map(function (item, index) {
             return (
-                <tr className="table-active" key={index}>
+                <tr className={item.creator.toLowerCase() === walletAddress ? 'bg-info table-active' : 'table-active'} key={index}>
                   <td>{item.name}</td>
                   <td>{item.votes}</td>
                   <td>{item.top_phrase}</td>
-                  <td>{item.creator}</td>
+                  <td>{item.creator.toLowerCase() === walletAddress ? item.creator + ' (you)' : item.creator}</td>
                   <td>
-                    <button className="btn btn-sm btn-success mx-1">View</button>
+                    <button onClick={() => viewCharacter(item)} className="btn btn-sm btn-success mx-1">View</button>
                     <button className="btn btn-sm btn-info mx-1">Edit</button>
-                    {/*<button className="btn btn-sm btn-warning mx-1">Votett {item.id}</button>*/}
                     <button onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote</button>
                     <button className="btn btn-sm btn-danger mx-1">Delete</button>
                   </td>
