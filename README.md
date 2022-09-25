@@ -1,3 +1,5 @@
+CRUD on Ethereum network
+
 [https://mrrob100.github.io/chars/](https://mrrob100.github.io/chars/)
 
 local dev:
@@ -7,3 +9,7 @@ local dev:
 deploying:
 
 ```npm run deploy```
+
+pushing:
+
+```git push project master```
