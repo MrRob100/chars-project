@@ -16,12 +16,10 @@ class App extends Component {
     chars: [],
     selectedChar: {},
     name: "",
-    phrases: [
-      "by all means",
-      "my no means"
-    ],
+    phrases: [""],
     activity: "",
     walletAddress: "",
+    loading: false,
   }
 
   render() {
@@ -51,6 +49,8 @@ class App extends Component {
 
     const getCharacters = async () => {
 
+      this.setState({loading: true})
+
       await requestAccount();
 
       const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
@@ -61,22 +61,24 @@ class App extends Component {
 
       let fillChars = [];
       chars.forEach(function (item) {
+
         fillChars.push(
             {
               'id': item.id.toNumber(),
               'name': item.name,
               'votes': item.votes.toString(),
-              'top_phrase': item.phrases,
+              'top_phrase': JSON.parse(item.phrases)[0],
               'creator': utils.getAddress(item.creator),
             }
         );
       });
 
-      this.setState({chars: fillChars});
+      this.setState({chars: fillChars, loading: false});
     }
 
     const createCharacter = async (event) => {
       event.preventDefault();
+      this.setState({loading: true})
 
       if (typeof window.ethereum !== 'undefined') {
         await requestAccount();
@@ -92,9 +94,10 @@ class App extends Component {
 
         const contractX = new Contract(this.state.contractAddress, abi, signer);
 
-        let encodedPhrases = JSON.parse(this.state.phrases);
+        console.log('ef', this.state.phrases);
+        console.log(typeof this.state.phrases);
 
-        console.log('ef', encodedPhrases);
+        let encodedPhrases = JSON.stringify(this.state.phrases);
 
         const tx = await contractX.addCharacter(this.state.name, encodedPhrases);
         await tx.wait();
@@ -119,6 +122,8 @@ class App extends Component {
 
     const viewCharacter = async (item) => {
 
+      this.setState({loading: true});
+
       const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
 
       const contractX = new Contract(this.state.contractAddress, abi, contractProvider);
@@ -140,13 +145,10 @@ class App extends Component {
         showCreateForm: false,
       });
 
-      console.log(this.state.selectedChar.phrases);
+      this.setState({loading: false});
     }
 
     const getShow = () => {
-
-      console.log(this.state.selectedChar.phrases);
-
       let phrases = JSON.parse(this.state.selectedChar.phrases);
 
       return <div className="row my-3">
@@ -154,17 +156,18 @@ class App extends Component {
           <div className="card shadow">
             <form onSubmit={createCharacter}>
               <div className="card-body">
+                <i onClick={() => this.setState({showShow: false})} className="fa fa-close position-absolute end-0 me-3 cursor-pointer"></i>
                 <h1>{this.state.selectedChar.name}</h1>
+                <p>Votes: {this.state.selectedChar.votes}</p>
                 <p>Phrases:</p>
                 <ul>
                   {phrases.map(function (item, index) {
                     return (
-                        <li key={index}>item</li>
+                        <li key={index}>{item}</li>
                     )
                   })
                   }
                 </ul>
-                <button onClick={() => this.setState({show: false})} className="btn btn-default">Close</button>
               </div>
             </form>
           </div>
@@ -197,6 +200,7 @@ class App extends Component {
           <div className="card shadow">
             <form onSubmit={createCharacter}>
               <div className="card-body">
+                <i onClick={() => this.setState({showCreateForm: false})} className="fa fa-close position-absolute end-0 me-3 cursor-pointer"></i>
                 <div className="form-group">
                   <label htmlFor="name" className="form-label mt-4">Name</label>
                   <input
@@ -239,7 +243,9 @@ class App extends Component {
 
     return (
         <div className="App">
-          <p>Activity: {this.state.activity}</p>
+          <div className="my-3">
+            {this.state.loading && <i className="fa fa-spinner"></i>}
+          </div>
           <header>
             <button
                 onClick={getCharacters}
