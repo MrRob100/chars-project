@@ -188,8 +188,6 @@ class App extends Component {
 
       const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
 
-      // console.log(contractProvider);
-
       const contractX = new Contract(this.state.contractAddress, this.state.abi, contractProvider);
 
       let chars = await contractX.getCharacters();
@@ -307,7 +305,13 @@ class App extends Component {
     const addPhraseField = (e) => {
       e.preventDefault();
       let currentPhrases = this.state.phrases;
-      currentPhrases.push("r");
+      currentPhrases.push("");
+      this.setState({phrases: currentPhrases});
+    }
+
+    const removePhraseField = (index) => {
+      let currentPhrases = this.state.phrases;
+      currentPhrases.splice(index, 1);
       this.setState({phrases: currentPhrases});
     }
 
@@ -332,25 +336,24 @@ class App extends Component {
                 <div className="form-group">
                   <label htmlFor="phrase" className="form-label mt-4">Phrases</label>
                   {this.state.phrases.map(function (item, index) {
-                        return (
-                            <div key={index}>
-                              <input
-                                  type="text"
-                                  required
-                                  value={item}
-                                  onChange={(e) => setPhrase(index, e.target.value)}
-                                  className="form-control"
-                              >
-                              </input>
-                            </div>
-                        )
-                      }
-                  )
-                  }
-                  <button onClick={addPhraseField} className="fa fa-plus">Add</button>
+                    return (
+                      <div key={index}>
+                        <input
+                            type="text"
+                            required
+                            value={item}
+                            onChange={(e) => setPhrase(index, e.target.value)}
+                            className="w-75 m-1 p-1"
+                        >
+                        </input>
+                        <span onClick={() => removePhraseField(index)} className="btn btn-danger fa fa-trash"></span>
+                      </div>
+                    )
+                  })}
+                  <button onClick={addPhraseField} className="fa fa-plus float-end m-2"></button>
                 </div>
                 <br></br>
-                <input type="submit" value="Save"/>
+                <input className="btn btn-success" type="submit" value="Save"/>
               </div>
             </form>
           </div>
