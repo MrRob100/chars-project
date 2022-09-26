@@ -9,7 +9,7 @@ import abi from './abi.json';
 class App extends Component {
 
   state = {
-    contractAddress: "0x81e4f93013dE5ecC5eC6AD0CBE24E70D1cC570Ba",
+    contractAddress: "0x61F8f66758ABe087b8530c02eC27ffa7C143E44D",
     infuraUrl: "https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd",
     showCreateForm: false,
     showShow: false,
@@ -51,7 +51,6 @@ class App extends Component {
 
     const getCharacters = async () => {
 
-
       await requestAccount();
 
       const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
@@ -76,7 +75,7 @@ class App extends Component {
       this.setState({chars: fillChars});
     }
 
-    const createCharacters = async (event) => {
+    const createCharacter = async (event) => {
       event.preventDefault();
 
       if (typeof window.ethereum !== 'undefined') {
@@ -94,6 +93,8 @@ class App extends Component {
         const contractX = new Contract(this.state.contractAddress, abi, signer);
 
         let encodedPhrases = JSON.parse(this.state.phrases);
+
+        console.log('ef', encodedPhrases);
 
         const tx = await contractX.addCharacter(this.state.name, encodedPhrases);
         await tx.wait();
@@ -151,7 +152,7 @@ class App extends Component {
       return <div className="row my-3">
         <div className="col-6 offset-3">
           <div className="card shadow">
-            <form onSubmit={createCharacters}>
+            <form onSubmit={createCharacter}>
               <div className="card-body">
                 <h1>{this.state.selectedChar.name}</h1>
                 <p>Phrases:</p>
@@ -171,10 +172,6 @@ class App extends Component {
       </div>
     }
 
-    const setPhrase = (index, value) => {
-      this.state.phrases[index] = value;
-    }
-
     const addPhraseField = (e) => {
       e.preventDefault();
       let currentPhrases = this.state.phrases;
@@ -188,11 +185,17 @@ class App extends Component {
       this.setState({phrases: currentPhrases});
     }
 
+    const setPhrase = (index, value) => {
+      let currentPhrases = this.state.phrases;
+      currentPhrases[index] = value;
+      this.setState({phrases: currentPhrases});
+    }
+
     const getCreateForm = () => {
       return <div className="row my-3">
         <div className="col-6 offset-3">
           <div className="card shadow">
-            <form onSubmit={createCharacters}>
+            <form onSubmit={createCharacter}>
               <div className="card-body">
                 <div className="form-group">
                   <label htmlFor="name" className="form-label mt-4">Name</label>
