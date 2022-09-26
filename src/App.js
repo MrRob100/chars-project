@@ -60,17 +60,20 @@ class App extends Component {
       let chars = await contractX.getCharacters();
 
       let fillChars = [];
+
       chars.forEach(function (item) {
 
-        fillChars.push(
-            {
-              'id': item.id.toNumber(),
-              'name': item.name,
-              'votes': item.votes.toString(),
-              'top_phrase': JSON.parse(item.phrases)[0],
-              'creator': utils.getAddress(item.creator),
-            }
-        );
+        if (item.name) {
+          fillChars.push(
+              {
+                'id': item.id.toNumber(),
+                'name': item.name,
+                'votes': item.votes.toString(),
+                'top_phrase': JSON.parse(item.phrases)[0],
+                'creator': utils.getAddress(item.creator),
+              }
+          );
+        }
       });
 
       this.setState({chars: fillChars, loading: false});
@@ -93,9 +96,6 @@ class App extends Component {
         const signer = provider.getSigner();
 
         const contractX = new Contract(this.state.contractAddress, abi, signer);
-
-        console.log('ef', this.state.phrases);
-        console.log(typeof this.state.phrases);
 
         let encodedPhrases = JSON.stringify(this.state.phrases);
 
@@ -146,6 +146,22 @@ class App extends Component {
       });
 
       this.setState({loading: false});
+    }
+
+    const deleteCharacter = async (item) => {
+      this.setState({loading: true});
+
+      if (typeof window.ethereum !== 'undefined') {
+        await requestAccount();
+
+        const provider = new providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contractX = new Contract(this.state.contractAddress, abi, signer);
+
+        const tx = await contractX.deleteCharacter(item.id);
+        await tx.wait();
+        await getCharacters();
+      }
     }
 
     const getShow = () => {
@@ -257,7 +273,6 @@ class App extends Component {
                 className="btn btn-warning m-3"
             >Create Char
             </button>
-            {/*{showCreateForm && getRendered()}*/}
             {this.state.showCreateForm && getCreateForm()}
             {this.state.showShow && getShow()}
             <table className="table table-hover">
@@ -285,7 +300,7 @@ class App extends Component {
                         <button className="btn btn-sm btn-info mx-1">Edit</button>
                         <button onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote
                         </button>
-                        <button className="btn btn-sm btn-danger mx-1">Delete</button>
+                        <button onClick={() => deleteCharacter(item)} className="btn btn-sm btn-danger mx-1">Delete</button>
                       </td>
                     </tr>
                 )
