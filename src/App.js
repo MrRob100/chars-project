@@ -3,6 +3,7 @@ import './App.css';
 import { providers, Wallet, Contract, utils } from "ethers";
 
 import React, { Component } from "react";
+import sass from './sass/app.scss';
 
 class App extends Component {
 
