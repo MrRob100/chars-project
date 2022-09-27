@@ -15,7 +15,7 @@ class App extends Component {
     showShow: false,
     showEditForm: false,
     chars: [],
-    selectedChar: {},
+    charId: null,
     name: "",
     phrases: [""],
     votes: null,
@@ -146,21 +146,32 @@ class App extends Component {
       let char = await contractX.getCharacter(item.id);
 
       this.setState({
+        charId: char.id,
         name: char.name,
         phrases: JSON.parse(char.phrases),
         loading:false,
         showEditForm: true,
       });
-
-        // 'id': char.id.toNumber(),
-        // 'name': char.name,
-        // 'votes': char.votes.toString(),
-        // 'phrases': char.phrases,
-        // 'creator': utils.getAddress(char.creator),
     }
 
-    const updateCharacter = async (item) => {
-      // this.state({})
+    const updateCharacter = async (event) => {
+      event.preventDefault();
+      this.setState({
+        loading: true,
+        showEditForm: false,
+      });
+
+      if (typeof window.ethereum !== 'undefined') {
+        await requestAccount();
+
+        const provider = new providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contractX = new Contract(this.state.contractAddress, abi, signer);
+
+        const tx = await contractX.updateCharacter(this.state.charId, this.state.name, JSON.stringify(this.state.phrases));
+        await tx.wait();
+        await getCharacters();
+      }
     }
 
     const deleteCharacter = async (item) => {
@@ -319,9 +330,6 @@ class App extends Component {
 
     return (
         <div className="App">
-          <div className="my-3">
-            {this.state.loading && <i className="fa fa-spinner"></i>}
-          </div>
           <header>
             <button
                 onClick={getCharacters}
@@ -333,6 +341,9 @@ class App extends Component {
                 className="btn btn-warning m-3"
             >Create Char
             </button>
+            <div className="my-3">
+              {this.state.loading && <i className="fa fa-spinner"></i>}
+            </div>
             {this.state.showCreateForm && getCreateForm()}
             {this.state.showShow && getShow()}
             {this.state.showEditForm && getEditForm()}
