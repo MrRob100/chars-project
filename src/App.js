@@ -9,14 +9,16 @@ import abi from './abi.json';
 class App extends Component {
 
   state = {
-    contractAddress: "0x61F8f66758ABe087b8530c02eC27ffa7C143E44D",
+    contractAddress: "0x8dD7b8390F63f21A8Da115c61b36034F660F4820",
     infuraUrl: "https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd",
     showCreateForm: false,
     showShow: false,
+    showEditForm: false,
     chars: [],
     selectedChar: {},
     name: "",
     phrases: [""],
+    votes: null,
     activity: "",
     walletAddress: "",
     loading: false,
@@ -48,19 +50,12 @@ class App extends Component {
     }
 
     const getCharacters = async () => {
-
       this.setState({loading: true})
-
       await requestAccount();
-
       const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
-
       const contractX = new Contract(this.state.contractAddress, abi, contractProvider);
-
       let chars = await contractX.getCharacters();
-
       let fillChars = [];
-
       chars.forEach(function (item) {
 
         if (item.name) {
@@ -121,31 +116,51 @@ class App extends Component {
     }
 
     const viewCharacter = async (item) => {
-
-      this.setState({loading: true});
-
+      this.setState({
+        loading: true,
+        showCreateForm: false,
+        showEditForm: false,
+      });
       const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
-
       const contractX = new Contract(this.state.contractAddress, abi, contractProvider);
-
       let char = await contractX.getCharacter(item.id);
 
       this.setState({
-        selectedChar: {
-          'id': char.id.toNumber(),
-          'name': char.name,
-          'votes': char.votes.toString(),
-          'phrases': char.phrases,
-          'creator': utils.getAddress(char.creator),
-        }
+        name: char.name,
+        phrases: JSON.parse(char.phrases),
+        showShow: true,
+        loading: false,
       });
+    }
+
+    const editCharacter = async (item) => {
+      this.setState(
+          {
+            loading: true,
+            showShow: false,
+            showCreateForm: false,
+          }
+      );
+      const contractProvider = new providers.JsonRpcProvider(this.state.infuraUrl);
+      const contractX = new Contract(this.state.contractAddress, abi, contractProvider);
+      let char = await contractX.getCharacter(item.id);
 
       this.setState({
-        showShow: true,
-        showCreateForm: false,
+        name: char.name,
+        phrases: JSON.parse(char.phrases),
+        loading:false,
+        showEditForm: true,
       });
 
-      this.setState({loading: false});
+        // 'id': char.id.toNumber(),
+        // 'name': char.name,
+        // 'votes': char.votes.toString(),
+        // 'phrases': char.phrases,
+        // 'creator': utils.getAddress(char.creator),
+    }
+
+    const updateCharacter = async (item) => {
+      // this.state({})
     }
 
     const deleteCharacter = async (item) => {
@@ -165,19 +180,17 @@ class App extends Component {
     }
 
     const getShow = () => {
-      let phrases = JSON.parse(this.state.selectedChar.phrases);
-
       return <div className="row my-3">
         <div className="col-6 offset-3">
           <div className="card shadow">
             <form onSubmit={createCharacter}>
               <div className="card-body">
                 <i onClick={() => this.setState({showShow: false})} className="fa fa-close position-absolute end-0 me-3 cursor-pointer"></i>
-                <h1>{this.state.selectedChar.name}</h1>
-                <p>Votes: {this.state.selectedChar.votes}</p>
+                <h1>{this.state.name}</h1>
+                <p>Votes: {this.state.votes}</p>
                 <p>Phrases:</p>
                 <ul>
-                  {phrases.map(function (item, index) {
+                  {this.state.phrases.map(function (item, index) {
                     return (
                         <li key={index}>{item}</li>
                     )
@@ -208,6 +221,53 @@ class App extends Component {
       let currentPhrases = this.state.phrases;
       currentPhrases[index] = value;
       this.setState({phrases: currentPhrases});
+    }
+
+    const getEditForm = () => {
+      return <div className="row my-3">
+        <div className="col-6 offset-3">
+          <div className="card shadow">
+            <form onSubmit={updateCharacter}>
+              <div className="card-body">
+                <i onClick={() => this.setState({showEditForm: false})} className="fa fa-close position-absolute end-0 me-3 cursor-pointer"></i>
+                <div className="form-group">
+                  <label htmlFor="name" className="form-label mt-4">Name</label>
+                  <input
+                      type="text"
+                      required
+                      value={this.state.name}
+                      onChange={(e) => this.setState({name: e.target.value})}
+                      className="form-control"
+                      id="name"
+                      placeholder="Baldy McShitJokes">
+                  </input>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="phrase" className="form-label mt-4">Phrases</label>
+                  {this.state.phrases.map(function (item, index) {
+                    return (
+                        <div key={index}>
+                          <input
+                              type="text"
+                              required
+                              value={item}
+                              onChange={(e) => setPhrase(index, e.target.value)}
+                              className="w-75 m-1 p-1"
+                          >
+                          </input>
+                          <span onClick={() => removePhraseField(index)} className="btn btn-danger fa fa-trash"></span>
+                        </div>
+                    )
+                  })}
+                  <button onClick={addPhraseField} className="fa fa-plus float-end m-2"></button>
+                </div>
+                <br></br>
+                <input className="btn btn-success" type="submit" value="Save"/>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     }
 
     const getCreateForm = () => {
@@ -275,6 +335,7 @@ class App extends Component {
             </button>
             {this.state.showCreateForm && getCreateForm()}
             {this.state.showShow && getShow()}
+            {this.state.showEditForm && getEditForm()}
             <table className="table table-hover">
               <thead>
               <tr>
@@ -295,11 +356,9 @@ class App extends Component {
                       <td>{item.top_phrase}</td>
                       <td>{item.creator.toLowerCase() === this.state.walletAddress ? item.creator + ' (you)' : item.creator}</td>
                       <td>
-                        <button onClick={() => viewCharacter(item)} className="btn btn-sm btn-success mx-1">View
-                        </button>
-                        <button className="btn btn-sm btn-info mx-1">Edit</button>
-                        <button onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote
-                        </button>
+                        <button onClick={() => viewCharacter(item)} className="btn btn-sm btn-success mx-1">View</button>
+                        <button onClick={() => editCharacter(item)} className="btn btn-sm btn-info mx-1">Edit</button>
+                        <button onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote</button>
                         <button onClick={() => deleteCharacter(item)} className="btn btn-sm btn-danger mx-1">Delete</button>
                       </td>
                     </tr>
