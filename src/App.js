@@ -2,6 +2,8 @@ import './App.css';
 
 import { providers, Wallet, Contract, utils } from "ethers";
 
+import { Web3Storage } from 'web3.storage'
+
 import React, { Component } from "react";
 import sass from './sass/app.scss';
 import abi from './abi.json';
@@ -9,7 +11,9 @@ import abi from './abi.json';
 class App extends Component {
 
   state = {
-    contractAddress: "0x8dD7b8390F63f21A8Da115c61b36034F660F4820",
+    src: null,
+    web3storageToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweEI5MzAxQThDRTE2NGQxRURDYzEzNzcyQTYwMTc0MkJjOTdGOTBCZGIiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjQzMDMwNzg5ODUsIm5hbWUiOiJjaGFycyJ9.SNApZVwso_ks7y24XI_nrmcePVosI6xcOas1S1AG2Vk",
+    contractAddress: "0xE7E1FB470285EF198C4B67f4B8BF51148c2d2c9C",
     infuraUrl: "https://ropsten.infura.io/v3/b59953df17ce4e248a1198806fe9c4bd",
     showCreateForm: false,
     showShow: false,
@@ -25,6 +29,56 @@ class App extends Component {
   }
 
   render() {
+
+    const captureFile = (event) => {
+      // console.log('capture file...');
+      // event.preventDefault();
+      // const file = event.target.files[0];
+      // const reader = new window.FileReader();
+      // reader.readAsArrayBuffer(file);
+      // reader.onloadend = () => {
+      //   this.setState({buffer: Buffer(reader.result)})
+      // }
+      // console.log('buffer', this.state.buffer);
+    }
+
+    const uploadFile = async () => {
+      console.log('uploading');
+      // Construct with token and endpoint
+      const fileInput = document.getElementById("image");
+
+      if (fileInput.files.length === 0) {
+        console.log('len0');
+        let src = `https://dweb.link/ipfs/test.png`
+        this.setState({src: src});
+      }
+
+      try {
+        const client = new Web3Storage({token: this.state.web3storageToken})
+
+        const rootCid = await client.put(fileInput.files) // Promise<CIDString>
+
+        console.log(rootCid);
+        console.log(fileInput.files);
+
+        for(const preFile of fileInput.files) {
+          let src = `https://dweb.link/ipfs/${rootCid}/${preFile.name}`
+          this.setState({src: src});
+        }
+
+        const info = await client.status(rootCid) // Promise<Status | undefined>
+        const res = await client.get(rootCid) // Promise<Web3Response | null>
+        const files = await res.files() // Promise<Web3File[]>
+        for (const file of files) {
+          console.log(`${file.cid} ${file.name} ${file.size}`)
+          let src = `https://dweb.link/ipfs/${file.cid}/${file.name}`
+          this.setState({src: src});
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     const requestAccount = async () => {
       console.log('Requesting account...');
 
@@ -56,8 +110,8 @@ class App extends Component {
       const contractX = new Contract(this.state.contractAddress, abi, contractProvider);
       let chars = await contractX.getCharacters();
       let fillChars = [];
-      chars.forEach(function (item) {
 
+      chars.forEach(function (item) {
         if (item.name) {
           fillChars.push(
               {
@@ -65,6 +119,7 @@ class App extends Component {
                 'name': item.name,
                 'votes': item.votes.toString(),
                 'top_phrase': JSON.parse(item.phrases)[0],
+                'image': item.image,
                 'creator': utils.getAddress(item.creator),
               }
           );
@@ -87,14 +142,15 @@ class App extends Component {
         });
 
         const provider = new providers.Web3Provider(window.ethereum);
-
         const signer = provider.getSigner();
-
         const contractX = new Contract(this.state.contractAddress, abi, signer);
-
         let encodedPhrases = JSON.stringify(this.state.phrases);
 
-        const tx = await contractX.addCharacter(this.state.name, encodedPhrases);
+        await uploadFile();
+
+        console.log('src: ', this.state.src); //SPACES IN IMAGE NAME CAUSE PROBS
+
+        const tx = await contractX.addCharacter(this.state.name, encodedPhrases, this.state.src);
         await tx.wait();
 
         await getCharacters();
@@ -319,6 +375,7 @@ class App extends Component {
                   })}
                   <button onClick={addPhraseField} className="fa fa-plus float-end m-2"></button>
                 </div>
+                <input className="my-3" type="file" id="image"></input>
                 <br></br>
                 <input className="btn btn-success" type="submit" value="Save"/>
               </div>
@@ -332,8 +389,8 @@ class App extends Component {
         <div className="App">
           <header>
             <button
-                onClick={getCharacters}
-                className="btn btn-info"
+              onClick={getCharacters}
+              className="btn btn-info"
             >Get Chars
             </button>
             <button
@@ -350,6 +407,7 @@ class App extends Component {
             <table className="table table-hover">
               <thead>
               <tr>
+                <th scope="col">Image</th>
                 <th scope="col">Name</th>
                 <th scope="col">Votes</th>
                 <th scope="col">Top Phrase</th>
@@ -362,6 +420,7 @@ class App extends Component {
                 return (
                     <tr className={item.creator.toLowerCase() === this.state.walletAddress ? 'bg-info table-active' : 'table-active'}
                         key={index}>
+                      <td><img className="table-image" src={item.image}/></td>
                       <td>{item.name}</td>
                       <td>{item.votes}</td>
                       <td>{item.top_phrase}</td>
