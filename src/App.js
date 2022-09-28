@@ -184,6 +184,7 @@ class App extends Component {
       this.setState({
         name: char.name,
         phrases: JSON.parse(char.phrases),
+        src: char.image,
         showShow: true,
         loading: false,
       });
@@ -253,6 +254,7 @@ class App extends Component {
             <form onSubmit={createCharacter}>
               <div className="card-body">
                 <i onClick={() => this.setState({showShow: false})} className="fa fa-close position-absolute end-0 me-3 cursor-pointer"></i>
+                <img className="show-image" src={this.state.src} />
                 <h1>{this.state.name}</h1>
                 <p>Votes: {this.state.votes}</p>
                 <p>Phrases:</p>

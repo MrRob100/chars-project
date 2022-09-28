@@ -41,4 +41,12 @@
   position: relative;
   max-height: 50px;
   width: auto;
+  right: 0;
+}
+
+.show-image {
+  position: relative;
+  max-height: 250px;
+  width: auto;
+  right: 0;
 }
