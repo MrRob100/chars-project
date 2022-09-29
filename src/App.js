@@ -23,6 +23,7 @@ class App extends Component {
     name: "",
     phrases: [""],
     votes: null,
+    creator: "",
     activity: "",
     walletAddress: "",
     loading: false,
@@ -30,16 +31,22 @@ class App extends Component {
 
   render() {
 
-    const captureFile = (event) => {
-      // console.log('capture file...');
-      // event.preventDefault();
-      // const file = event.target.files[0];
-      // const reader = new window.FileReader();
-      // reader.readAsArrayBuffer(file);
-      // reader.onloadend = () => {
-      //   this.setState({buffer: Buffer(reader.result)})
-      // }
-      // console.log('buffer', this.state.buffer);
+    const tipCreator = async (creatorAddress) => {
+      if (window.ethereum) {
+
+        let provider = new providers.Web3Provider(window.ethereum);
+
+        await requestAccount();
+
+        const params = [{
+          from: this.state.walletAddress,
+          to: creatorAddress,
+          value: utils.parseEther("0.01").toHexString(),
+        }];
+
+        const transactionHash = await provider.send('eth_sendTransaction', params)
+        console.log('transactionHash is ' + transactionHash);
+      }
     }
 
     const uploadFile = async () => {
@@ -58,11 +65,9 @@ class App extends Component {
 
         const rootCid = await client.put(fileInput.files) // Promise<CIDString>
 
-        console.log(rootCid);
-        console.log(fileInput.files);
-
         for(const preFile of fileInput.files) {
-          let src = `https://dweb.link/ipfs/${rootCid}/${preFile.name}`
+          let fileName = preFile.name.replace(" ", "-");
+          let src = `https://dweb.link/ipfs/${rootCid}/${fileName}`
           this.setState({src: src});
         }
 
@@ -70,8 +75,8 @@ class App extends Component {
         const res = await client.get(rootCid) // Promise<Web3Response | null>
         const files = await res.files() // Promise<Web3File[]>
         for (const file of files) {
-          console.log(`${file.cid} ${file.name} ${file.size}`)
-          let src = `https://dweb.link/ipfs/${file.cid}/${file.name}`
+          let fileNameFromIpfs = file.name.replace(" ",  "-");
+          let src = `https://dweb.link/ipfs/${file.cid}/${fileNameFromIpfs}`;
           this.setState({src: src});
         }
       } catch (error) {
@@ -93,13 +98,12 @@ class App extends Component {
 
           this.setState({walletAddress: accounts[0]});
 
-          // this.setState(walletAddress, accounts[0]);
         } catch (error) {
           console.log('Error connecting...');
         }
 
       } else {
-        alert('Meta Mask not detected');
+        alert('Meta Mask not detected, only read-only functions available');
       }
     }
 
@@ -114,14 +118,14 @@ class App extends Component {
       chars.forEach(function (item) {
         if (item.name) {
           fillChars.push(
-              {
-                'id': item.id.toNumber(),
-                'name': item.name,
-                'votes': item.votes.toString(),
-                'top_phrase': JSON.parse(item.phrases)[0],
-                'image': item.image,
-                'creator': utils.getAddress(item.creator),
-              }
+            {
+              'id': item.id.toNumber(),
+              'name': item.name,
+              'votes': item.votes.toString(),
+              'top_phrase': JSON.parse(item.phrases)[0],
+              'image': item.image,
+              'creator': utils.getAddress(item.creator),
+            }
           );
         }
       });
@@ -396,6 +400,7 @@ class App extends Component {
             >Get Chars
             </button>
             <button
+                disabled={!window.ethereum}
                 onClick={() => this.setState({showCreateForm:true})}
                 className="btn btn-warning m-3"
             >Create Char
@@ -420,20 +425,21 @@ class App extends Component {
               <tbody>
               {this.state.chars.map(function (item, index) {
                 return (
-                    <tr className={item.creator.toLowerCase() === this.state.walletAddress ? 'bg-info table-active' : 'table-active'}
-                        key={index}>
-                      <td><img className="table-image" src={item.image}/></td>
-                      <td>{item.name}</td>
-                      <td>{item.votes}</td>
-                      <td>{item.top_phrase}</td>
-                      <td>{item.creator.toLowerCase() === this.state.walletAddress ? item.creator + ' (you)' : item.creator}</td>
-                      <td>
-                        <button onClick={() => viewCharacter(item)} className="btn btn-sm btn-success mx-1">View</button>
-                        <button onClick={() => editCharacter(item)} className="btn btn-sm btn-info mx-1">Edit</button>
-                        <button onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote</button>
-                        <button onClick={() => deleteCharacter(item)} className="btn btn-sm btn-danger mx-1">Delete</button>
-                      </td>
-                    </tr>
+                  <tr className={item.creator.toLowerCase() === this.state.walletAddress ? 'bg-info table-active' : 'table-active'}
+                      key={index}>
+                    <td><img className="table-image" src={item.image}/></td>
+                    <td>{item.name}</td>
+                    <td>{item.votes}</td>
+                    <td>{item.top_phrase}</td>
+                    <td>{item.creator.toLowerCase() === this.state.walletAddress ? item.creator + ' (you)' : item.creator}</td>
+                    <td>
+                      <button onClick={() => viewCharacter(item)} className="btn btn-sm btn-success mx-1">View</button>
+                      {item.creator.toLowerCase() === this.state.walletAddress && <button disabled={!window.ethereum} onClick={() => editCharacter(item)} className="btn btn-sm btn-info mx-1">Edit</button>}
+                      {item.creator.toLowerCase() !== this.state.walletAddress && <button disabled={!window.ethereum} onClick={() => upVoteCharacter(item)} className="btn btn-sm btn-warning mx-1">Vote</button>}
+                      {item.creator.toLowerCase() === this.state.walletAddress && <button disabled={!window.ethereum} onClick={() => deleteCharacter(item)} className="btn btn-sm btn-danger mx-1">Delete</button>}
+                      {item.creator.toLowerCase() !== this.state.walletAddress && <button disabled={!window.ethereum} onClick={() => tipCreator(item.creator)} className="btn btn-sm btn-info mx-1">Tip 0.01 ETH</button>}
+                    </td>
+                  </tr>
                 )
               }.bind(this))}
               </tbody>
