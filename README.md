@@ -1,4 +1,9 @@
-CRUD on Ethereum network
+###CRUD on Ethereum network with images stored on IPFS
+
+[comment]: <> (react)
+[comment]: <> (solidity)
+[comment]: <> (ethereum)
+[comment]: <> (ipfs)
 
 [https://mrrob100.github.io/chars/](https://mrrob100.github.io/chars/)
 
@@ -15,3 +20,10 @@ deploying:
 pushing:
 
 ```git push project master```
+
+
+![](public/logo192.png)
+![](public/ipfs2.png)
+![](public/solidity.png)
+![](public/eth.png)
+
