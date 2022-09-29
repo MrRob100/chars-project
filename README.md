@@ -23,7 +23,7 @@ pushing:
 
 
 ![](public/logo192.png)
-![](public/ipfs2.png)
+![](public/ipfs.png)
 ![](public/solidity.png)
 ![](public/eth.png)
 
