@@ -66,7 +66,7 @@ class App extends Component {
         const rootCid = await client.put(fileInput.files) // Promise<CIDString>
 
         for(const preFile of fileInput.files) {
-          let fileName = preFile.name.replace(" ", "-");
+          let fileName = preFile.name.replace(" ", "%");
           let src = `https://dweb.link/ipfs/${rootCid}/${fileName}`
           this.setState({src: src});
         }
@@ -75,7 +75,7 @@ class App extends Component {
         const res = await client.get(rootCid) // Promise<Web3Response | null>
         const files = await res.files() // Promise<Web3File[]>
         for (const file of files) {
-          let fileNameFromIpfs = file.name.replace(" ",  "-");
+          let fileNameFromIpfs = file.name.replace(" ",  "%");
           let src = `https://dweb.link/ipfs/${file.cid}/${fileNameFromIpfs}`;
           this.setState({src: src});
         }
