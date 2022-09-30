@@ -152,10 +152,14 @@ class App extends Component {
 
         await uploadFile();
 
-        console.log('src: ', this.state.src); //SPACES IN IMAGE NAME CAUSE PROBS
-
         const tx = await contractX.addCharacter(this.state.name, encodedPhrases, this.state.src);
         await tx.wait();
+
+        this.setState({
+          name: null,
+          phrases: [""],
+          src: null,
+        });
 
         await getCharacters();
       }
@@ -231,6 +235,13 @@ class App extends Component {
 
         const tx = await contractX.updateCharacter(this.state.charId, this.state.name, JSON.stringify(this.state.phrases));
         await tx.wait();
+
+        this.setState({
+          name: null,
+          phrases: [""],
+          src: null,
+        });
+
         await getCharacters();
       }
     }
