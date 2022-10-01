@@ -191,6 +191,7 @@ class App extends Component {
 
       this.setState({
         name: char.name,
+        votes: char.votes.toString(),
         phrases: JSON.parse(char.phrases),
         src: char.image,
         showShow: true,
